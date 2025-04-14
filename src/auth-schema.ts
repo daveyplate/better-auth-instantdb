@@ -19,11 +19,6 @@ type EntityName = "account" | "session" | "user" | "verification"
 type FieldDef = ReturnType<typeof i.string>
 type EntityDef = ReturnType<typeof i.entity>
 
-// Extract entity names from InstantDB schema
-type ExtractEntityNames<T> = T extends { entities: Record<infer K extends string, unknown> }
-    ? K
-    : never
-
 const defaultEntityFields: Record<EntityName, Record<string, FieldDef>> = {
     account: {
         accessToken: i.string(),
