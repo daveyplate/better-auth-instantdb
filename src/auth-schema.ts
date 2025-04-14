@@ -1,11 +1,7 @@
 // Docs: https://www.instantdb.com/docs/modeling-data
 
 import { i } from "@instantdb/react"
-
-function pluralize(name: string) {
-    // Simple pluralization: add 's' if not already ending with 's'
-    return name.endsWith("s") ? name : `${name}s`
-}
+import { capitalizeFirstLetter, pluralize } from "./utils"
 
 type FieldType = "string" | "date" | "boolean" | "number"
 type AdditionalField = { type: FieldType; indexed?: boolean; unique?: boolean }
@@ -245,11 +241,6 @@ type AuthSchemaReturn<C extends AuthSchemaConfig> = {
     links: {
         [K in BaseLinkKeys<C>]: LinkDef
     } & Record<string, LinkDef>
-}
-
-// Helper function to capitalize the first letter of a string
-function capitalizeFirstLetter(str: string): string {
-    return str.charAt(0).toUpperCase() + str.slice(1)
 }
 
 export function createAuthSchema<C extends AuthSchemaConfig>(config: C): AuthSchemaReturn<C> {
