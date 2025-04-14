@@ -35,7 +35,7 @@ const adminDb = createAdminClient({
 export const auth = betterAuth({
   database: instantDBAdapter({
     db: adminDb,
-    usePlural: false, // Optional: set to true if your schema uses plural table names
+    usePlural: true, // Optional: set to true if your schema uses plural table names
     debugLogs: false  // Optional: set to true to see detailed logs
   }),
   // Other Better Auth configuration options
@@ -49,7 +49,7 @@ Synchronize authentication state between Better Auth and InstantDB:
 
 ```typescript
 // app.tsx
-import { useSession } from 'better-auth/react';
+import { useSession } from '@/lib/auth-client';
 import { init } from '@instantdb/react';
 import { useInstantAuth } from '@daveyplate/tsx-package-fumadocs';
 
@@ -79,13 +79,13 @@ export function App() {
 
 Create an `instant.schema.ts` file with the required entities for Better Auth:
 
+#### instant.schema.ts
 ```typescript
-// instant.schema.ts
 import { i } from "@instantdb/react";
 
 const _schema = i.schema({
   entities: {
-    // System entities (required)
+    // System entities
     $files: i.entity({
       path: i.string().unique().indexed(),
       url: i.any(),
@@ -93,13 +93,12 @@ const _schema = i.schema({
     $users: i.entity({
       email: i.string().unique().indexed(),
     }),
-    // Authentication entities (required)
+    // Authentication entities
     users: i.entity({
       createdAt: i.date(),
       email: i.string().unique(),
       emailVerified: i.boolean(),
       image: i.string(),
-      isAnonymous: i.boolean(),
       name: i.string(),
       updatedAt: i.date(),
     }),
@@ -133,14 +132,13 @@ const _schema = i.schema({
       updatedAt: i.date(),
       value: i.string(),
     }),
-    // Optional entities for additional features
+    // Optional entities for additional features (public profile example)
     profiles: i.entity({
       createdAt: i.date(),
       image: i.string(),
       name: i.string(),
       updatedAt: i.date(),
     }),
-    // Add your custom entities here
   },
   links: {
     // Required links for auth
@@ -183,7 +181,7 @@ const _schema = i.schema({
         label: "accounts",
       },
     },
-    // Optional links
+    // Optional links (public profile example)
     profilesUser: {
       forward: {
         on: "profiles",
@@ -230,17 +228,17 @@ const rules = {
     bind: ["isOwner", "auth.id != null && auth.id == data.id"],
     allow: {
       view: "isOwner",
-      create: "false", // Created by the adapter
+      create: "false",
       delete: "false",
-      update: "isOwner",
+      update: "false", // Don't allow direct modification of user object (email, etc)
     },
   },
   accounts: {
     bind: ["isOwner", "auth.id != null && auth.id == data.userId"],
     allow: {
       view: "isOwner",
-      create: "false", // Created by the adapter
-      delete: "isOwner",
+      create: "false",
+      delete: "false",
       update: "false",
     },
   },
@@ -248,9 +246,24 @@ const rules = {
     bind: ["isOwner", "auth.id != null && auth.id == data.userId"],
     allow: {
       view: "isOwner",
-      create: "false", // Created by the adapter
-      delete: "isOwner",
+      create: "false",
+      delete: "false",
       update: "false",
+    },
+  },
+  verifications: {
+    allow: {
+      $default: "false"
+    }
+  },
+  // Optional permissions (public profile example)
+  profiles: {
+    bind: ["isOwner", "auth.id != null && auth.id == data.id"],
+    allow: {
+      view: "true",
+      create: "false",
+      delete: "false",
+      update: "isOwner",
     },
   },
   // Add your custom entity permissions here
@@ -264,9 +277,6 @@ export default rules;
 After creating these files, use the InstantDB CLI to push them to your app:
 
 ```bash
-# Install the CLI if you haven't already
-pnpm add -g instant-cli
-
 # Push schema
 npx instant-cli@latest push schema
 
