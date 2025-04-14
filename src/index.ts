@@ -1,1 +1,2 @@
-export * from "./test-component"
+export * from "./auth-schema"
+export * from "./instant-adapter"

@@ -16,9 +16,12 @@
     "author": "daveycodez",
     "license": "MIT",
     "devDependencies": {
+        "@instantdb/admin": "^0.18.4",
+        "@instantdb/react": "^0.18.4",
         "@types/node": "^22.14.1",
         "@types/react": "^19.1.2",
         "@types/react-dom": "^19.1.2",
+        "better-auth": "^1.2.7",
         "esbuild-plugin-preserve-directives": "^0.0.11",
         "react": "^19.1.0",
         "react-dom": "^19.1.0",
@@ -30,7 +33,10 @@
     },
     "peerDependencies": {
         "react": ">=18.0.0",
-        "react-dom": ">=18.0.0"
+        "react-dom": ">=18.0.0",
+        "better-auth": ">=1.2.6",
+        "@instantdb/admin": ">=0.18.0",
+        "@instantdb/react": ">=0.18.0"
     },
     "packageManager": "pnpm@10.8.1"
 }
