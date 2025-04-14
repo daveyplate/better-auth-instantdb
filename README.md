@@ -5,7 +5,7 @@ A seamless integration between [Better Auth](https://better-auth.com) and [Insta
 ## Installation
 
 ```bash
-pnpm add better-auth @instantdb/react @instantdb/admin @daveyplate/tsx-package-fumadocs
+pnpm add better-auth @instantdb/react @instantdb/admin @daveyplate/better-auth-instantdb
 ```
 
 ## Features
@@ -22,7 +22,7 @@ pnpm add better-auth @instantdb/react @instantdb/admin @daveyplate/tsx-package-f
 ```typescript
 // auth.ts
 import { betterAuth } from 'better-auth';
-import { instantDBAdapter } from '@daveyplate/tsx-package-fumadocs';
+import { instantDBAdapter } from '@daveyplate/better-auth-instantdb';
 import { createAdminClient } from '@instantdb/admin';
 
 // Create InstantDB admin client
@@ -51,7 +51,7 @@ Synchronize authentication state between Better Auth and InstantDB:
 // app.tsx
 import { useSession } from '@/lib/auth-client';
 import { init } from '@instantdb/react';
-import { useInstantAuth } from '@daveyplate/tsx-package-fumadocs';
+import { useInstantAuth } from '@daveyplate/better-auth-instantdb';
 
 // Initialize InstantDB client
 const db = init({ 
