@@ -71,7 +71,7 @@ const db = init({
 export function Providers({ children }) {
     const { data: sessionData, isPending } = useSession()
     
-    // Set up InstantDB auth sync with Better Auth using session data directly
+    // Set up InstantDB auth sync with Better Auth
     useInstantAuth({ 
         db, 
         sessionData,
