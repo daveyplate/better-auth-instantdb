@@ -25,11 +25,11 @@ pnpm add @daveyplate/better-auth-instantdb@latest
 
 ### Basic Setup
 
+#### auth.ts
 ```typescript
-// auth.ts
-import { betterAuth } from 'better-auth';
-import { instantDBAdapter } from '@daveyplate/better-auth-instantdb';
-import { createAdminClient } from '@instantdb/admin';
+import { betterAuth } from 'better-auth'
+import { instantDBAdapter } from '@daveyplate/better-auth-instantdb'
+import { createAdminClient } from '@instantdb/admin'
 
 // Create InstantDB admin client
 const adminDb = createAdminClient({
@@ -46,34 +46,36 @@ export const auth = betterAuth({
   }),
   // Other Better Auth configuration options
   emailAndPassword: { enabled: true }
-});
+})
 ```
 
 ### Client-Side Usage
 
 Synchronize authentication state between Better Auth and InstantDB:
 
+#### providers.tsx
 ```typescript
-// app.tsx
-import { useSession } from '@/lib/auth-client';
-import { init } from '@instantdb/react';
-import { useInstantAuth } from '@daveyplate/better-auth-instantdb';
+"use client"
+
+import { useSession } from '@/lib/auth-client'
+import { init } from '@instantdb/react'
+import { useInstantAuth } from '@daveyplate/better-auth-instantdb'
 
 // Initialize InstantDB client
 const db = init({ 
   appId: process.env.NEXT_PUBLIC_INSTANT_APP_ID
-});
+})
 
-export function App() {
+export function Providers() {
   // Set up InstantDB auth sync with Better Auth
   useInstantAuth({ 
     db, 
     useSession 
-  });
+  })
   
   return (
     // Your application code
-  );
+  )
 }
 ```
 
@@ -294,14 +296,16 @@ npx instant-cli@latest push perms
 
 Update your client-side InstantDB initialization to use your schema:
 
+#### /database/instant.ts
 ```typescript
-import { init } from "@instantdb/react";
-import schema from "./path/to/instant.schema";
+import { init } from "@instantdb/react"
+import schema from "../../instant.schema"
 
-const db = init({
+export const db = init({
   appId: process.env.NEXT_PUBLIC_INSTANT_APP_ID,
   schema, // Add your schema here
-});
+  devtool: process.env.NODE_ENV === "development"
+})
 ```
 
 ## API Reference
@@ -317,7 +321,7 @@ Creates an adapter that allows Better Auth to use InstantDB as its database.
 | `db` | `InstantAdminDatabase` | (required) | An InstantDB admin client instance |
 | `usePlural` | `boolean` | `false` | Set to `true` if your schema uses plural table names |
 | `debugLogs` | `boolean` | `false` | Set to `true` to enable detailed logging |
-| `transactionHooks` | `object` | `undefined` | Custom hooks for create and update operations |
+| `transactionHooks` | `Promise<TransactionChunk<any, any>[]> | Promise<void>` | `undefined` | Custom hooks for create and update operations |
 
 ### `useInstantAuth({ db, useSession })`
 
@@ -336,26 +340,42 @@ A React hook that synchronizes authentication state between Better Auth and Inst
 
 You can extend the adapter's behavior with custom transaction hooks:
 
+#### Sync public profile with user entity
 ```typescript
 instantDBAdapter({
-  db: adminDb,
-  transactionHooks: {
-    // Add custom logic when creating a user
-    create: async ({ model, data }) => {
-      if (model === 'user') {
-        // Return additional transactions to execute
-        return [
-          adminDb.tx.userMetadata[data.id].update({
-            lastLogin: Date.now()
-          })
-        ];
-      }
-    },
-    // Add custom logic when updating
-    update: async ({ model, update, where }) => {
-      // Custom update logic
+    db,
+    usePlural: true,
+    transactionHooks: {
+        create: async ({ model, data }) => {
+            if (model === "users") {
+                const transactions = [
+                    db.tx.profiles[data.id]
+                        .update({
+                            name: data.name,
+                            image: data.image,
+                            createdAt: Date.now(),
+                            updatedAt: Date.now()
+                        })
+                        .link({ user: data.id })
+                ]
+
+                return transactions
+            }
+        },
+        update: async ({ model, update, where }) => {
+            if (model === "users") {
+                const result = await db.query({ profiles: { $: { where: parseWhere(where) } } })
+
+                return result.profiles.map((profile) =>
+                    db.tx.profiles[profile.id].update({
+                        name: update.name,
+                        image: update.image,
+                        updatedAt: Date.now()
+                    })
+                )
+            }
+        }
     }
-  }
 })
 ```
 
