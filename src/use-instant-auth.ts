@@ -11,7 +11,7 @@ export function useInstantAuth({
 }: {
     // biome-ignore lint/suspicious/noExplicitAny:
     db: InstantReactWebDatabase<InstantSchemaDef<any, any, any>>
-    sessionData: { session: Session; user: User } | null
+    sessionData?: { session: Session; user: User } | null
     isPending: boolean
 }) {
     const { user, isLoading } = db.useAuth()
