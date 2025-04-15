@@ -2,7 +2,7 @@
     "name": "@daveyplate/better-auth-instantdb",
     "homepage": "https://github.com/daveyplate/better-auth-instantdb",
     "version": "1.0.0",
-    "description": "Better Auth adapter for InstantDB",
+    "description": "Better Auth InstantDB Adapter",
     "module": "dist/index",
     "types": "dist/index",
     "exports": "./dist/index.js",
@@ -12,7 +12,19 @@
         "dev": "tsc-watch --onSuccess 'biome check --fix'",
         "prepublishOnly": "rm -rf dist && tsup --clean --dts"
     },
-    "keywords": ["typescript", "instantdb", "better-auth", "auth", "authentication", "adapter"],
+    "keywords": [
+        "typescript",
+        "instantdb",
+        "better",
+        "better-auth",
+        "auth",
+        "authentication",
+        "adapter",
+        "react",
+        "tanstack",
+        "next",
+        "nextjs"
+    ],
     "author": "daveycodez",
     "license": "MIT",
     "devDependencies": {
