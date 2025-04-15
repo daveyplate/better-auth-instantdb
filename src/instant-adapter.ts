@@ -137,11 +137,15 @@ export const instantDBAdapter = ({
                     }
 
                     // Link other models to user
-                    const userIdField = getFieldName({ model, field: "userId" })
+                    try {
+                        const userIdField = getFieldName({ model, field: "userId" })
 
-                    if (data[userIdField]) {
-                        transactions.push(db.tx[model][data.id].link({ user: data[userIdField] }))
-                    }
+                        if (data[userIdField]) {
+                            transactions.push(
+                                db.tx[model][data.id].link({ user: data[userIdField] })
+                            )
+                        }
+                    } catch (error) {}
 
                     if (transactionHooks?.create) {
                         const hookTransactions = await transactionHooks.create({
@@ -150,6 +154,10 @@ export const instantDBAdapter = ({
                         })
 
                         if (hookTransactions) transactions.push(...hookTransactions)
+                    }
+
+                    if (debugLogs) {
+                        console.log("[InstantDB] Transact:", JSON.stringify(transactions))
                     }
 
                     await db.transact(transactions)
@@ -176,9 +184,15 @@ export const instantDBAdapter = ({
                         })
                     }
 
-                    await db.transact(
-                        result[model].map((entity) => db.tx[model][entity.id].delete())
+                    const transactions = result[model].map((entity) =>
+                        db.tx[model][entity.id].delete()
                     )
+
+                    if (debugLogs) {
+                        console.log("[InstantDB] Transact:", JSON.stringify(transactions))
+                    }
+
+                    await db.transact(transactions)
                 },
                 async deleteMany({ model, where }) {
                     const result = await db.query({ [model]: { $: { where: parseWhere(where) } } })
@@ -214,10 +228,14 @@ export const instantDBAdapter = ({
                     }
 
                     if (debugLogs) {
-                        console.log("[InstantDB]", JSON.stringify(query))
+                        console.log("[InstantDB] Query:", JSON.stringify(query))
                     }
 
                     const result = await db.query(query)
+
+                    if (debugLogs) {
+                        console.log("[InstantDB] Result:", JSON.stringify(result))
+                    }
 
                     // biome-ignore lint/suspicious/noExplicitAny:
                     return result[model] as any[]
