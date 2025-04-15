@@ -25,6 +25,8 @@ pnpm add @daveyplate/better-auth-instantdb@latest
 
 ### Basic Setup
 
+First you need to add the InstantDB Adapter to your Better Auth config.
+
 #### auth.ts
 ```typescript
 import { betterAuth } from 'better-auth'
