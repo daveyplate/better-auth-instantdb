@@ -33,19 +33,19 @@ import { createAdminClient } from '@instantdb/admin'
 
 // Create InstantDB admin client
 const adminDb = createAdminClient({
-  appId: process.env.INSTANT_APP_ID,
-  apiKey: process.env.INSTANT_API_KEY
+    appId: process.env.INSTANT_APP_ID,
+    apiKey: process.env.INSTANT_API_KEY
 });
 
 // Create Better Auth instance with InstantDB adapter
 export const auth = betterAuth({
-  database: instantDBAdapter({
-    db: adminDb,
-    usePlural: true, // Optional: set to true if your schema uses plural table names
-    debugLogs: false  // Optional: set to true to see detailed logs
-  }),
-  // Other Better Auth configuration options
-  emailAndPassword: { enabled: true }
+    database: instantDBAdapter({
+        db: adminDb,
+        usePlural: true, // Optional: set to true if your schema uses plural table names
+        debugLogs: false  // Optional: set to true to see detailed logs
+    }),
+    // Other Better Auth configuration options
+    emailAndPassword: { enabled: true }
 })
 ```
 
@@ -63,19 +63,19 @@ import { useInstantAuth } from '@daveyplate/better-auth-instantdb'
 
 // Initialize InstantDB client
 const db = init({ 
-  appId: process.env.NEXT_PUBLIC_INSTANT_APP_ID
+    appId: process.env.NEXT_PUBLIC_INSTANT_APP_ID
 })
 
 export function Providers() {
-  // Set up InstantDB auth sync with Better Auth
-  useInstantAuth({ 
-    db, 
-    useSession 
-  })
-  
-  return (
-    // Your application code
-  )
+    // Set up InstantDB auth sync with Better Auth
+    useInstantAuth({ 
+        db, 
+        useSession 
+    })
+    
+    return (
+        // Your application code
+    )
 }
 ```
 
@@ -302,9 +302,9 @@ import { init } from "@instantdb/react"
 import schema from "../../instant.schema"
 
 export const db = init({
-  appId: process.env.NEXT_PUBLIC_INSTANT_APP_ID,
-  schema, // Add your schema here
-  devtool: process.env.NODE_ENV === "development"
+    appId: process.env.NEXT_PUBLIC_INSTANT_APP_ID,
+    schema, // Add your schema here
+    devtool: process.env.NODE_ENV === "development"
 })
 ```
 
