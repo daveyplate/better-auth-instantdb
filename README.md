@@ -68,20 +68,22 @@ const db = init({
     appId: process.env.NEXT_PUBLIC_INSTANT_APP_ID
 })
 
-export function Providers() {
-    // Set up InstantDB auth sync with Better Auth
+export function Providers({ children }) {
+    const { data: sessionData, isPending } = useSession()
+    
+    // Set up InstantDB auth sync with Better Auth using session data directly
     useInstantAuth({ 
         db, 
-        useSession 
+        sessionData,
+        isPending
     })
     
     return (
         // Your application code
+        {children}
     )
 }
 ```
-
-*Note you can pass useSession hook from [@daveyplate/better-auth-tanstack](https://github.com/daveyplate/better-auth-tanstack). This is recommended for offline caching with a TanStack Query persistClient.*
 
 ## InstantDB Schema and Permissions Setup
 
@@ -337,6 +339,18 @@ A React hook that synchronizes authentication state between Better Auth and Inst
 |-----------|------|-------------|
 | `db` | `InstantReactWebDatabase` | An InstantDB client instance |
 | `useSession` | `function` | The `useSession` hook from Better Auth |
+
+### `useInstantAuth({ db, sessionData, isPending })`
+
+An alternative form of the React hook that synchronizes authentication state between Better Auth and InstantDB.
+
+#### Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `db` | `InstantReactWebDatabase` | An InstantDB client instance |
+| `sessionData` | `{ session: Session; user: User } \| null` | Session data from Better Auth |
+| `isPending` | `boolean` | Whether the session data is still loading |
 
 ## Advanced Usage
 
