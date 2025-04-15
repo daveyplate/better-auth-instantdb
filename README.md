@@ -5,6 +5,7 @@ A seamless integration between [Better Auth](https://better-auth.com) and [Insta
 - *Own Your Auth*
 
 𝕏 [@daveycodez](https://x.com/daveycodez)
+
 ☕️ [Buy me a coffee](https://buymeacoffee.com/daveycodez)
 
 ## Installation
