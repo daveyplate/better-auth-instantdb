@@ -81,6 +81,8 @@ export function Providers() {
 }
 ```
 
+*Note you can pass useSession hook from [@daveyplate/better-auth-tanstack](https://github.com/daveyplate/better-auth-tanstack)*
+
 ## InstantDB Schema and Permissions Setup
 
 ⚠️ **Important**: You must manually create and configure the InstantDB schema and permissions files for this adapter to work correctly.
