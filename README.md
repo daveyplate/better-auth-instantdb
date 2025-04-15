@@ -31,12 +31,14 @@ First you need to add the InstantDB Adapter to your Better Auth config.
 ```typescript
 import { betterAuth } from 'better-auth'
 import { instantDBAdapter } from '@daveyplate/better-auth-instantdb'
-import { createAdminClient } from '@instantdb/admin'
+import { init } from "@instantdb/admin";
+import schema from "instant.schema";
 
 // Create InstantDB admin client
-const adminDb = createAdminClient({
+const adminDb = init({
     appId: process.env.INSTANT_APP_ID,
     apiKey: process.env.INSTANT_API_KEY
+    schema
 });
 
 // Create Better Auth instance with InstantDB adapter
