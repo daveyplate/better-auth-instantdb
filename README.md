@@ -10,7 +10,7 @@ A seamless integration between [Better Auth](https://better-auth.com) and [Insta
 ## Installation
 
 ```bash
-pnpm add better-auth @instantdb/react @instantdb/admin @daveyplate/better-auth-instantdb
+pnpm add @daveyplate/better-auth-instantdb@latest
 ```
 
 ## Features
