@@ -2,6 +2,8 @@
 
 A seamless integration between [Better Auth](https://better-auth.com) and [InstantDB](https://www.instantdb.com) that allows you to use InstantDB as your authentication database.
 
+[Better Auth UI Integration](https://better-auth-ui.com/data/instantdb)
+
 - *Own Your Auth*
 
 𝕏 [@daveycodez](https://x.com/daveycodez)
