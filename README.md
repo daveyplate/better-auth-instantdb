@@ -230,7 +230,7 @@ const rules = {
       view: "isOwner",
       create: "false",
       delete: "false",
-      update: "false", // Don't allow direct modification of user object (email, etc)
+      update: "isOwner && (newData.email == data.email) && (newData.emailVerified == data.emailVerified) && (newData.createdAt == data.createdAt)",
     },
   },
   accounts: {
