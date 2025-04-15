@@ -81,7 +81,7 @@ export function Providers() {
 }
 ```
 
-*Note you can pass useSession hook from [@daveyplate/better-auth-tanstack](https://github.com/daveyplate/better-auth-tanstack)*
+*Note you can pass useSession hook from [@daveyplate/better-auth-tanstack](https://github.com/daveyplate/better-auth-tanstack). This is recommended for offline caching with a TanStack Query persistClient.*
 
 ## InstantDB Schema and Permissions Setup
 
