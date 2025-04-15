@@ -85,7 +85,7 @@ export function parseWhere(where?: Where[]) {
 }
 
 export const instantDBAdapter = ({
-    usePlural = false,
+    usePlural = true,
     debugLogs = false,
     transactionHooks,
     db

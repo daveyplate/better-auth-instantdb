@@ -323,7 +323,7 @@ Creates an adapter that allows Better Auth to use InstantDB as its database.
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `db` | `InstantAdminDatabase` | (required) | An InstantDB admin client instance |
-| `usePlural` | `boolean` | `false` | Set to `true` if your schema uses plural table names |
+| `usePlural` | `boolean` | `true` | Set to `false` if your schema uses singular table names |
 | `debugLogs` | `boolean` | `false` | Set to `true` to enable detailed logging |
 | `transactionHooks` | `Promise<TransactionChunk<any, any>[]>` | `undefined` | Custom hooks for create and update operations |
 
