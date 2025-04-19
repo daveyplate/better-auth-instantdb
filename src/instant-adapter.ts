@@ -112,21 +112,56 @@ export const instantDBAdapter = ({
 
                     const transactions = []
 
-                    // Create the InstantDB $user
+                    // Create the $users entity along with the user entity
                     if (getDefaultModelName(model) === "user") {
-                        const email = `${data.id}@user.id`
-                        transactions.push(db.tx.$users[data.id].update({ email }))
+                        transactions.push(db.tx.$users[data.id].update({ email: data.email }))
                     }
 
                     // Create the InstantDB token and override session.token
                     if (getDefaultModelName(model) === "session") {
-                        const email = `${data.userId}@user.id`
-                        const token = await db.auth.createToken(email)
+                        // Get the $users entity for this session's userId with the user link
+                        const queryData = await db.query({
+                            $users: { $: { where: { id: data.userId } }, user: {} }
+                        })
 
+                        const $users = queryData.$users
+
+                        if ($users.length === 0) {
+                            throw new Error(`$users entity not found: ${data.userId}`)
+                        }
+
+                        // Get the user link from the $users entity
+                        const $user = $users[0] as unknown as {
+                            email: string
+                            user?: { email: string }
+                        }
+
+                        console.log("$user", $user)
+
+                        const user = $user.user
+
+                        if (!user) {
+                            throw new Error(`user link not found: ${data.userId}`)
+                        }
+
+                        // Create the InstantDB token and override session.token
+
+                        if (debugLogs) {
+                            console.log("[InstantDB] Create token for:", $user.email)
+                        }
+
+                        const token = await db.auth.createToken($user.email)
                         const tokenField = getFieldName({ model, field: "token" })
 
                         // @ts-ignore
                         data[tokenField] = token
+
+                        // Update $users entity email to match the user email
+                        if (user.email !== $user.email) {
+                            transactions.push(
+                                db.tx.$users[data.userId].update({ email: user.email })
+                            )
+                        }
                     }
 
                     transactions.push(db.tx[model][data.id].update(data))
@@ -165,16 +200,40 @@ export const instantDBAdapter = ({
                     return data
                 },
                 async count({ model, where }) {
-                    const result = await db.query({ [model]: { $: { where: parseWhere(where) } } })
+                    const query = { [model]: { $: { where: parseWhere(where) } } }
 
-                    return result[model].length
+                    if (debugLogs) {
+                        console.log("[InstantDB] Query:", JSON.stringify(query))
+                    }
+
+                    const result = await db.query(query)
+
+                    if (debugLogs) {
+                        console.log("[InstantDB] Result:", JSON.stringify(result))
+                    }
+
+                    const entities = result[model]
+
+                    return entities.length
                 },
                 async delete({ model, where }) {
-                    const result = await db.query({ [model]: { $: { where: parseWhere(where) } } })
+                    const query = { [model]: { $: { where: parseWhere(where) } } }
+
+                    if (debugLogs) {
+                        console.log("[InstantDB] Query:", JSON.stringify(query))
+                    }
+
+                    const result = await db.query(query)
+
+                    if (debugLogs) {
+                        console.log("[InstantDB] Result:", JSON.stringify(result))
+                    }
+
+                    const entities = result[model]
 
                     // If a session is deleted, we need to sign out the token
                     if (getDefaultModelName(model) === "session") {
-                        result[model].map(async (entity) => {
+                        entities.map(async (entity) => {
                             try {
                                 const tokenField = getFieldName({ model, field: "token" })
                                 await db.auth.signOut({
@@ -184,9 +243,7 @@ export const instantDBAdapter = ({
                         })
                     }
 
-                    const transactions = result[model].map((entity) =>
-                        db.tx[model][entity.id].delete()
-                    )
+                    const transactions = entities.map((entity) => db.tx[model][entity.id].delete())
 
                     if (debugLogs) {
                         console.log("[InstantDB] Transact:", JSON.stringify(transactions))
@@ -195,11 +252,23 @@ export const instantDBAdapter = ({
                     await db.transact(transactions)
                 },
                 async deleteMany({ model, where }) {
-                    const result = await db.query({ [model]: { $: { where: parseWhere(where) } } })
+                    const query = { [model]: { $: { where: parseWhere(where) } } }
+
+                    if (debugLogs) {
+                        console.log("[InstantDB] Query:", JSON.stringify(query))
+                    }
+
+                    const result = await db.query(query)
+
+                    if (debugLogs) {
+                        console.log("[InstantDB] Result:", JSON.stringify(result))
+                    }
+
+                    const entities = result[model]
 
                     // If a sessions are deleted, we need to sign out the tokens
                     if (getDefaultModelName(model) === "session") {
-                        result[model].map(async (entity) => {
+                        entities.map(async (entity) => {
                             try {
                                 const tokenField = getFieldName({ model, field: "token" })
                                 await db.auth.signOut({
@@ -209,11 +278,15 @@ export const instantDBAdapter = ({
                         })
                     }
 
-                    await db.transact(
-                        result[model].map((entity) => db.tx[model][entity.id].delete())
-                    )
+                    const transactions = entities.map((entity) => db.tx[model][entity.id].delete())
 
-                    return result[model].length
+                    if (debugLogs) {
+                        console.log("[InstantDB] Transact:", JSON.stringify(transactions))
+                    }
+
+                    await db.transact(transactions)
+
+                    return entities.length
                 },
                 async findMany({ model, where, limit, sortBy, offset }) {
                     let order: Order | undefined
@@ -237,23 +310,64 @@ export const instantDBAdapter = ({
                         console.log("[InstantDB] Result:", JSON.stringify(result))
                     }
 
-                    // biome-ignore lint/suspicious/noExplicitAny:
-                    return result[model] as any[]
-                },
-                async findOne({ model, where }) {
-                    const result = await db.query({ [model]: { $: { where: parseWhere(where) } } })
+                    const entities = result[model]
 
                     // biome-ignore lint/suspicious/noExplicitAny:
-                    if (result[model].length) return result[model][0] as any
+                    return entities as any[]
+                },
+                async findOne({ model, where }) {
+                    const query = { [model]: { $: { where: parseWhere(where) } } }
+
+                    if (debugLogs) {
+                        console.log("[InstantDB] Query:", JSON.stringify(query))
+                    }
+
+                    const result = await db.query(query)
+
+                    if (debugLogs) {
+                        console.log("[InstantDB] Result:", JSON.stringify(result))
+                    }
+
+                    const entities = result[model]
+
+                    // biome-ignore lint/suspicious/noExplicitAny:
+                    if (entities.length > 0) return entities[0] as any
 
                     return null
                 },
                 async update({ model, update, where }) {
-                    const result = await db.query({ [model]: { $: { where: parseWhere(where) } } })
+                    const query = { [model]: { $: { where: parseWhere(where) } } }
 
-                    const transactions = result[model].map((entity) =>
+                    if (debugLogs) {
+                        console.log("[InstantDB] Query:", JSON.stringify(query))
+                    }
+
+                    const result = await db.query(query)
+
+                    if (debugLogs) {
+                        console.log("[InstantDB] Result:", JSON.stringify(result))
+                    }
+
+                    const entities = result[model]
+
+                    const transactions = entities.map((entity) =>
                         db.tx[model][entity.id].update(update as Record<string, unknown>)
                     )
+
+                    // If a user email is updated, we need to update the $users entity email
+                    if (getDefaultModelName(model) === "user") {
+                        const emailField = getFieldName({ model, field: "email" })
+
+                        // @ts-ignore
+                        const email = update[emailField]
+                        if (email) {
+                            transactions.push(
+                                ...entities.map((entity) =>
+                                    db.tx.$users[entity.id].update({ email })
+                                )
+                            )
+                        }
+                    }
 
                     if (transactionHooks?.update) {
                         const hookTransactions = await transactionHooks.update({
@@ -265,18 +379,35 @@ export const instantDBAdapter = ({
                         if (hookTransactions) transactions.push(...hookTransactions)
                     }
 
+                    if (debugLogs) {
+                        console.log("[InstantDB] Transact:", JSON.stringify(transactions))
+                    }
+
                     await db.transact(transactions)
 
-                    if (result[model].length) {
-                        return { ...result[model][0], ...update }
+                    // Return the updated entity
+                    if (entities.length > 0) {
+                        return { ...entities[0], ...update }
                     }
 
                     return null
                 },
                 async updateMany({ model, update, where }) {
-                    const result = await db.query({ [model]: { $: { where: parseWhere(where) } } })
+                    const query = { [model]: { $: { where: parseWhere(where) } } }
 
-                    const transactions = result[model].map((entity) =>
+                    if (debugLogs) {
+                        console.log("[InstantDB] Query:", JSON.stringify(query))
+                    }
+
+                    const result = await db.query(query)
+
+                    if (debugLogs) {
+                        console.log("[InstantDB] Result:", JSON.stringify(result))
+                    }
+
+                    const entities = result[model]
+
+                    const transactions = entities.map((entity) =>
                         db.tx[model][entity.id].update(update)
                     )
 
@@ -292,9 +423,13 @@ export const instantDBAdapter = ({
                         }
                     }
 
+                    if (debugLogs) {
+                        console.log("[InstantDB] Transact:", JSON.stringify(transactions))
+                    }
+
                     await db.transact(transactions)
 
-                    return result[model].length
+                    return entities.length
                 },
                 options: { usePlural, debugLogs }
             }
