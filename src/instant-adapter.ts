@@ -136,8 +136,6 @@ export const instantDBAdapter = ({
                             user?: { email: string }
                         }
 
-                        console.log("$user", $user)
-
                         const user = $user.user
 
                         if (!user) {
@@ -191,10 +189,6 @@ export const instantDBAdapter = ({
                         if (hookTransactions) transactions.push(...hookTransactions)
                     }
 
-                    if (debugLogs) {
-                        console.log("[InstantDB] Transact:", JSON.stringify(transactions))
-                    }
-
                     await db.transact(transactions)
 
                     return data
@@ -245,10 +239,6 @@ export const instantDBAdapter = ({
 
                     const transactions = entities.map((entity) => db.tx[model][entity.id].delete())
 
-                    if (debugLogs) {
-                        console.log("[InstantDB] Transact:", JSON.stringify(transactions))
-                    }
-
                     await db.transact(transactions)
                 },
                 async deleteMany({ model, where }) {
@@ -279,10 +269,6 @@ export const instantDBAdapter = ({
                     }
 
                     const transactions = entities.map((entity) => db.tx[model][entity.id].delete())
-
-                    if (debugLogs) {
-                        console.log("[InstantDB] Transact:", JSON.stringify(transactions))
-                    }
 
                     await db.transact(transactions)
 
@@ -379,10 +365,6 @@ export const instantDBAdapter = ({
                         if (hookTransactions) transactions.push(...hookTransactions)
                     }
 
-                    if (debugLogs) {
-                        console.log("[InstantDB] Transact:", JSON.stringify(transactions))
-                    }
-
                     await db.transact(transactions)
 
                     // Return the updated entity
@@ -421,10 +403,6 @@ export const instantDBAdapter = ({
                         if (hookTransactions) {
                             transactions.push(...hookTransactions)
                         }
-                    }
-
-                    if (debugLogs) {
-                        console.log("[InstantDB] Transact:", JSON.stringify(transactions))
                     }
 
                     await db.transact(transactions)
