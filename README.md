@@ -54,7 +54,7 @@ This guide walks you through setting up the Better Auth InstantDB adapter with t
 
     Add your `BETTER_AUTH_SECRET` You can generate a `BETTER_AUTH_SECRET` [here](https://www.better-auth.com/docs/installation#set-environment-variables).
 
-    Set `NEXT_PUBLIC_BASE_URL=http://localhost:3000`.
+    Set `DATABASE_URL=http://localhost:3000`.
 
     Add the following to your `.env.local` file.
 
@@ -344,7 +344,7 @@ This guide walks you through setting up the Better Auth InstantDB adapter with t
 
     // Initialize InstantDB client
     const db = init({
-      appId: process.env.NEXT_PUBLIC_INSTANT_APP_ID,
+      appId: process.env.NEXT_PUBLIC_INSTANT_APP_ID as string,
     });
 
     export function Providers({ children }: { children: React.ReactNode }) {
