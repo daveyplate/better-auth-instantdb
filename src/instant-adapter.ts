@@ -54,10 +54,6 @@ export const instantAdapter = ({
     adapter: ({ debugLog, getDefaultModelName, getFieldName }) => {
       return {
         create: async ({ data, model }) => {
-          if (getDefaultModelName(model) === "user") {
-            model = "$users"
-          }
-
           // Create the InstantDB token and override session.token
           if (getDefaultModelName(model) === "session") {
             // Get the $users entity for this session's userId with the user link
@@ -82,6 +78,10 @@ export const instantAdapter = ({
 
             // @ts-expect-error
             data[tokenField] = token
+          }
+
+          if (getDefaultModelName(model) === "user") {
+            model = "$users"
           }
 
           debugLog("Create", model, prettyPrint(data))
