@@ -130,3 +130,4 @@ dist
 .pnp.*
 .vscode
 .DS_Store
+pnpm-lock.yaml
