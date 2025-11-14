@@ -1,0 +1,165 @@
+import type { DBAdapterSchemaCreation } from "better-auth/adapters"
+
+// Helper type to extract field information from Better Auth schema
+type BetterAuthField = {
+  type: string | string[]
+  required?: boolean
+  unique?: boolean
+  defaultValue?: unknown
+  input?: boolean
+  sortable?: boolean
+  fieldName?: string
+  references?: {
+    model: string
+    field: string
+    onDelete?: string
+  }
+}
+
+type BetterAuthTable = {
+  modelName: string
+  fields: Record<string, BetterAuthField>
+  order?: number
+}
+
+/**
+ * Converts a Better Auth field type to InstantDB field type
+ */
+function convertFieldType(field: BetterAuthField): string {
+  const { type, required, unique, sortable } = field
+
+  // Handle type as string or array
+  const typeStr = Array.isArray(type) ? type[0] : type
+
+  let fieldType = ""
+  switch (typeStr) {
+    case "string":
+      fieldType = "i.string()"
+      break
+    case "boolean":
+      fieldType = "i.boolean()"
+      break
+    case "date":
+      fieldType = "i.date()"
+      break
+    case "number":
+      fieldType = "i.number()"
+      break
+    default:
+      fieldType = "i.string()" // Default to string for unknown types
+  }
+
+  // Apply modifiers
+  if (unique) {
+    fieldType += ".unique()"
+  }
+
+  // Only make optional if required is explicitly false
+  // If required is true, never make it optional (even if defaultValue exists)
+  if (required === false) {
+    fieldType += ".optional()"
+  }
+
+  // Add indexed if sortable
+  if (sortable) {
+    fieldType += ".indexed()"
+  }
+
+  return fieldType
+}
+
+/**
+ * Converts Better Auth schema format to InstantDB schema format
+ */
+function convertToInstantDBSchema(
+  tables: Record<string, BetterAuthTable>,
+  usePlural: boolean
+): string {
+  const entities: Record<string, string> = {}
+
+  for (const [key, table] of Object.entries(tables)) {
+    const { modelName, fields } = table
+
+    // Special handling for user table
+    if (modelName === "user") {
+      const userFields: string[] = []
+      const processedFields = new Set<string>()
+
+      // Always add email, imageURL, and type at the top (exact format required)
+      userFields.push("email: i.string().unique().indexed().optional()")
+      processedFields.add("email")
+
+      userFields.push("imageURL: i.string().optional()")
+      processedFields.add("imageURL") // Skip imageURL if it exists in fields
+
+      userFields.push("type: i.string().optional()")
+      processedFields.add("type") // Skip type if it exists in fields
+
+      // Add all other fields from the schema (including image as-is, don't transform it)
+      // All Better Auth fields must be optional on $users
+      for (const [fieldKey, field] of Object.entries(fields)) {
+        // Skip fields that are always included at the top: email, imageURL, type
+        if (processedFields.has(fieldKey)) {
+          continue
+        }
+
+        // Add field as-is but force it to be optional
+        const fieldType = convertFieldType(field)
+        // Ensure it ends with .optional() - remove existing .optional() if present and add it
+        const optionalFieldType = fieldType.endsWith(".optional()")
+          ? fieldType
+          : `${fieldType}.optional()`
+        userFields.push(`${fieldKey}: ${optionalFieldType}`)
+      }
+
+      entities.$users = `i.entity({\n      ${userFields.join(",\n      ")}\n    })`
+    } else {
+      // For other tables, use the key as entity name
+      const entityFields: string[] = []
+
+      for (const [fieldKey, field] of Object.entries(fields)) {
+        const fieldType = convertFieldType(field)
+        entityFields.push(`${fieldKey}: ${fieldType}`)
+      }
+
+      // Pluralize table name if usePlural is true
+      const entityName = usePlural ? `${key}s` : key
+      entities[entityName] =
+        `i.entity({\n      ${entityFields.join(",\n      ")}\n    })`
+    }
+  }
+
+  // Generate the schema file content
+  const entitiesString = Object.entries(entities)
+    .map(([name, definition]) => `    ${name}: ${definition}`)
+    .join(",\n")
+
+  return `// Docs: https://www.instantdb.com/docs/modeling-data
+
+import { i } from "@instantdb/react"
+
+export const authSchema = i.schema({
+  entities: {
+${entitiesString}
+  }
+})
+`
+}
+
+/**
+ * Creates an InstantDB schema file from Better Auth schema format
+ */
+export function createSchema(
+  file: string,
+  tables: Record<string, BetterAuthTable>,
+  usePlural: boolean
+): DBAdapterSchemaCreation {
+  const schemaContent = convertToInstantDBSchema(tables, usePlural)
+  // const filePath = resolve(process.cwd(), file)
+  // writeFileSync(file, schemaContent, "utf-8")
+  //console.log(`Schema file created at: ${filePath}`)
+  return {
+    code: schemaContent,
+    path: file
+  }
+}
