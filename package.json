@@ -12,6 +12,10 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
+    },
+    "./react": {
+      "types": "./dist/react.d.ts",
+      "import": "./dist/react.js"
     }
   },
   "files": [
@@ -31,12 +35,34 @@
   "license": "MIT",
   "devDependencies": {
     "@instantdb/admin": "^0.22.51",
+    "@instantdb/react": "^0.22.51",
     "@types/node": "^24.10.1",
+    "@types/react": "^19.2.4",
+    "@types/react-dom": "^19.2.3",
     "better-auth": "^1.3.34",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
     "typescript": "^5.9.3"
   },
   "peerDependencies": {
+    "@instantdb/admin": ">=0.22.0",
     "better-auth": ">=1.3.0"
+  },
+  "peerDependenciesOptional": {
+    "@instantdb/react": ">=0.22.0",
+    "react": ">=18.0.0",
+    "react-dom": ">=18.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@instantdb/react": {
+      "optional": true
+    },
+    "react": {
+      "optional": true
+    },
+    "react-dom": {
+      "optional": true
+    }
   },
   "packageManager": "pnpm@10.8.1"
 }
