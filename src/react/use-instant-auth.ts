@@ -8,7 +8,7 @@ import type { MinimalAuthClient, SessionResult } from "./types"
 export function useInstantAuth<
   TAuthClient extends MinimalAuthClient<TSessionResult>,
   TSessionResult extends SessionResult
->(db: InstantReactWebDatabase<any>, authClient: TAuthClient) {
+>(db: InstantReactWebDatabase<any, any>, authClient: TAuthClient) {
   const { isPending, data } = authClient.useSession()
 
   const handleAuthStateChange = useCallback(

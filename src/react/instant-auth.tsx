@@ -7,7 +7,7 @@ export function InstantAuth({
   authClient
 }: {
   // biome-ignore lint/suspicious/noExplicitAny: any thing goes
-  db: InstantReactWebDatabase<any>
+  db: InstantReactWebDatabase<any, any>
   authClient: MinimalAuthClient<SessionResult>
 }) {
   useInstantAuth(db, authClient)

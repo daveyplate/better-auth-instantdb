@@ -20,7 +20,7 @@ interface InstantAdapterConfig {
   /**
    * The InstantDB admin database instance.
    */
-  db: InstantAdminDatabase<any>
+  db: InstantAdminDatabase<any, any>
   /**
    * If the table names in the schema are plural.
    */
