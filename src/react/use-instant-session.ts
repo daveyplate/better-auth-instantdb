@@ -5,6 +5,7 @@ import type { User } from "@instantdb/core"
 import type { InstantReactWebDatabase } from "@instantdb/react"
 import type { BetterFetchError } from "better-auth/react"
 import type { MinimalAuthClient, SessionResult } from "./types"
+import { usePersistentSession } from "./use-persistent-session"
 
 export function useInstantSession<
   TSessionResult extends SessionResult,
@@ -16,7 +17,7 @@ export function useInstantSession<
     error,
     isRefetching,
     ...rest
-  } = authClient.useSession()
+  } = usePersistentSession(authClient)
 
   const { user: authUser, error: authError } = db.useAuth()
   const authPending = sessionData && !authUser && !authError

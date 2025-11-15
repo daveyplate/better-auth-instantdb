@@ -9,6 +9,7 @@ import type {
 import { useEffect } from "react"
 import { instantAuth } from "../shared/instant-auth"
 import type { MinimalAuthClient, SessionResult } from "./types"
+import { usePersistentSession } from "./use-persistent-session"
 
 export function useInstantAuth<
   TSchema extends InstantSchemaDef<
@@ -19,7 +20,7 @@ export function useInstantAuth<
   TAuthClient extends MinimalAuthClient<TSessionResult>,
   TSessionResult extends SessionResult
 >(db: InstantReactWebDatabase<TSchema>, authClient: TAuthClient) {
-  const { isPending, data } = authClient.useSession()
+  const { isPending, data } = usePersistentSession(authClient)
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: ignore
   useEffect(() => {
