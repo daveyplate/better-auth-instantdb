@@ -1,2 +1,2 @@
-export * from "./instant-adapter"
-export * from "./instant-auth"
+export * from "./adapter/instant-adapter"
+export * from "./shared/instant-auth"

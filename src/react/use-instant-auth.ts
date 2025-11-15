@@ -1,3 +1,4 @@
+import type { InstantCoreDatabase } from "@instantdb/core"
 import type {
   EntitiesDef,
   InstantReactWebDatabase,
@@ -6,7 +7,7 @@ import type {
   RoomsDef
 } from "@instantdb/react"
 import { useEffect } from "react"
-import { instantAuth } from "../instant-auth"
+import { instantAuth } from "../shared/instant-auth"
 import type { MinimalAuthClient, SessionResult } from "./types"
 
 export function useInstantAuth<
@@ -24,6 +25,6 @@ export function useInstantAuth<
   useEffect(() => {
     if (isPending) return
 
-    instantAuth(db, data?.session)
+    instantAuth(db as unknown as InstantCoreDatabase<TSchema>, data?.session)
   }, [data?.user.id])
 }

@@ -6,9 +6,8 @@ import {
   type DBAdapterDebugLogOption,
   type Where
 } from "better-auth/adapters"
-
+import { prettyPrint } from "../lib/utils"
 import { createSchema } from "./create-schema"
-import { prettyPrint } from "./utils"
 
 type Direction = "asc" | "desc"
 type Order = { [key: string]: Direction }

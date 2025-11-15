@@ -35,6 +35,7 @@
   "license": "MIT",
   "devDependencies": {
     "@instantdb/admin": "^0.22.51",
+    "@instantdb/core": "^0.22.51",
     "@instantdb/react": "^0.22.51",
     "@types/node": "^24.10.1",
     "@types/react": "^19.2.5",
@@ -64,5 +65,5 @@
       "optional": true
     }
   },
-  "packageManager": "pnpm@10.8.1"
+  "packageManager": "pnpm@10.22.0"
 }
