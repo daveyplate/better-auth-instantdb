@@ -5,7 +5,11 @@ import { fieldNameToLabel } from "../lib/utils"
 /**
  * Converts a Better Auth field type to InstantDB field type
  */
-function convertFieldType(field: DBFieldAttribute, modelName: string) {
+function convertFieldType(
+  field: DBFieldAttribute,
+  modelName: string,
+  fieldKey: string
+) {
   const { type, required, unique, sortable } = field
 
   // Handle type as string or array
@@ -55,8 +59,12 @@ function convertFieldType(field: DBFieldAttribute, modelName: string) {
     fieldType += ".indexed()"
   }
 
-  // For user model, ensure all fields end with optional()
-  if (modelName === "user" && !fieldType.endsWith(".optional()")) {
+  // For user model, ensure all fields except email end with optional()
+  if (
+    modelName === "user" &&
+    fieldKey !== "email" &&
+    !fieldType.endsWith(".optional()")
+  ) {
     fieldType += ".optional()"
   }
 
@@ -119,16 +127,16 @@ export function createLinks(
           continue
         }
 
-        // Generate link name: {sourceTable}{targetTable}
-        // e.g., "sessions" + "User" -> "sessionsUser"
-        const sourceTableName = sourceEntityName.replace("$", "")
-        const targetTableName =
-          targetModel.charAt(0).toUpperCase() +
-          toCamelCase(targetModel.slice(1))
-        const linkName = `${sourceTableName}${targetTableName}`
-
         // Generate forward label from field name, using target model if field doesn't end with "id"
         const forwardLabel = fieldNameToLabel(fieldKey, targetModel)
+
+        // Generate link name: {sourceTable}{forwardLabel}
+        // e.g., "invitations" + "Inviter" -> "invitationsInviter"
+        const sourceTableName = sourceEntityName.replace("$", "")
+        const forwardLabelCapitalized =
+          forwardLabel.charAt(0).toUpperCase() +
+          toCamelCase(forwardLabel.slice(1))
+        const linkName = `${sourceTableName}${forwardLabelCapitalized}`
 
         // Generate reverse label (use source entity name without $ prefix)
         const reverseLabel = sourceEntityName.replace("$", "")
@@ -170,7 +178,7 @@ export function createSchema(
     const entityFields: string[] = []
 
     for (const [fieldKey, field] of Object.entries(fields)) {
-      const fieldType = convertFieldType(field, modelName)
+      const fieldType = convertFieldType(field, modelName, fieldKey)
       entityFields.push(`${fieldKey}: ${fieldType}`)
     }
 
