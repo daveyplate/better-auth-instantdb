@@ -1,9 +1,6 @@
-/** biome-ignore-all lint/correctness/useHookAtTopLevel: ignore */
-/** biome-ignore-all lint/suspicious/noExplicitAny: any thing goes */
-
-import type { InstantCoreDatabase } from "@instantdb/core"
 import type { InstantReactWebDatabase } from "@instantdb/react"
 import { useEffect } from "react"
+
 import { instantAuth } from "../shared/instant-auth"
 import type { MinimalAuthClient, SessionResult } from "./types"
 import { usePersistentSession } from "./use-persistent-session"
@@ -23,10 +20,9 @@ export function useInstantAuth<TSessionResult extends SessionResult>({
     ? usePersistentSession(authClient)
     : authClient.useSession()
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: ignore
   useEffect(() => {
     if (isPending) return
 
-    instantAuth(db as unknown as InstantCoreDatabase<any>, data?.session)
-  }, [data?.user.id])
+    instantAuth(db, data?.session)
+  }, [db, isPending, data?.session])
 }

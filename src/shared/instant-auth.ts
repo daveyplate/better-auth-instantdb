@@ -1,22 +1,18 @@
-import type {
-  EntitiesDef,
-  InstantCoreDatabase,
-  InstantSchemaDef,
-  LinksDef,
-  RoomsDef
-} from "@instantdb/core"
+import type { InstantCoreDatabase } from "@instantdb/core"
+import type { InstantReactWebDatabase } from "@instantdb/react"
 import type { Session } from "better-auth"
 
-export async function instantAuth<
-  TSchema extends InstantSchemaDef<EntitiesDef, LinksDef<EntitiesDef>, RoomsDef>
->(db: InstantCoreDatabase<TSchema>, session?: Session) {
+export async function instantAuth(
+  db: InstantCoreDatabase<any, any> | InstantReactWebDatabase<any, any>,
+  session?: Session
+) {
   const user = await db.getAuth()
 
   if (session && user?.id !== session?.userId) {
     db.auth.signInWithToken(session.token)
   }
 
-  if (user && !session) {
+  if (!session && user) {
     db.auth.signOut()
   }
 }

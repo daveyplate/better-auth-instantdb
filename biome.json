@@ -20,7 +20,11 @@
         "noUnusedImports": {
           "level": "info",
           "fix": "safe"
-        }
+        },
+        "useHookAtTopLevel": "off"
+      },
+      "suspicious": {
+        "noExplicitAny": "off"
       }
     }
   },

@@ -1,5 +1,3 @@
-/** biome-ignore-all lint/suspicious/noExplicitAny: any thing goes */
-
 import { type InstantAdminDatabase, id } from "@instantdb/admin"
 import {
   createAdapterFactory,

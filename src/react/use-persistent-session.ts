@@ -1,5 +1,5 @@
-/** biome-ignore-all lint/suspicious/noExplicitAny: any thing goes */
 import { useEffect } from "react"
+
 import type { MinimalAuthClient, SessionResult } from "./types"
 import { useHydrated } from "./use-hydrated"
 
@@ -14,7 +14,6 @@ export function usePersistentSession<
     authClient.useSession()
   const hydrated = useHydrated()
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: ignore
   useEffect(() => {
     if (isPending) return
 
@@ -36,7 +35,7 @@ export function usePersistentSession<
 
     persistSession()
     unpersistSession()
-  }, [data?.session.id, isPending, error])
+  }, [data, isPending, error])
 
   if (hydrated && !data) {
     if (restoredData === undefined) {

@@ -1,5 +1,3 @@
-/** biome-ignore-all lint/suspicious/noExplicitAny: any thing goes */
-
 import type { InstantReactWebDatabase } from "@instantdb/react"
 import type { MinimalAuthClient, SessionResult } from "./types"
 import { useInstantAuth } from "./use-instant-auth"

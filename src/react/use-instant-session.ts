@@ -1,8 +1,5 @@
-/** biome-ignore-all lint/suspicious/noExplicitAny: any thing goes */
-/** biome-ignore-all lint/correctness/useHookAtTopLevel: ignore */
-
-import type { User } from "@instantdb/core"
 import type { BetterFetchError } from "better-auth/react"
+
 import type { SessionResult } from "./types"
 import type { InstantAuthProps } from "./use-instant-auth"
 import { usePersistentSession } from "./use-persistent-session"
@@ -32,15 +29,15 @@ export function useInstantSession<TSessionResult extends SessionResult>({
   )
 
   if (data?.$users?.length) {
-    const user = data.$users[0] as User
+    const user = data.$users[0]
 
     if (sessionData?.user?.id === user.id) {
-      sessionData.user = user as any
+      sessionData.user = user as typeof sessionData.user
     }
   }
 
   return {
-    data: !authError ? sessionData : null,
+    data: !authError && !authPending ? sessionData : null,
     isPending: authPending || isPending,
     isRefetching: authPending || isRefetching,
     error: (authError as BetterFetchError) || error,
