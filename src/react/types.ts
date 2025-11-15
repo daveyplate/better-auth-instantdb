@@ -1,4 +1,4 @@
-import type { Session, User } from "better-auth/types"
+import type { Session, User } from "better-auth"
 
 export type SessionResult = {
   isPending: boolean

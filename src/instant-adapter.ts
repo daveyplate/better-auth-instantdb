@@ -1,6 +1,5 @@
 /** biome-ignore-all lint/suspicious/noExplicitAny: any thing goes */
 
-import util from "node:util"
 import { type InstantAdminDatabase, id } from "@instantdb/admin"
 import {
   createAdapterFactory,
@@ -9,6 +8,7 @@ import {
 } from "better-auth/adapters"
 
 import { createSchema } from "./create-schema"
+import { prettyPrint } from "./utils"
 
 type Direction = "asc" | "desc"
 type Order = { [key: string]: Direction }
@@ -327,8 +327,4 @@ export function parseWhere(where?: Where[]) {
   })
 
   return whereQuery
-}
-
-function prettyPrint(object: any) {
-  return util.inspect(object, { colors: true, depth: null })
 }
