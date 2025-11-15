@@ -3,13 +3,16 @@ import type { BetterAuthDBSchema, DBFieldAttribute } from "@better-auth/core/db"
 /**
  * Converts a Better Auth field type to InstantDB field type
  */
-function convertFieldType(field: DBFieldAttribute): string {
-  const { type, required, unique, sortable } = field
+function convertFieldType(field: DBFieldAttribute) {
+  const { type, required, unique, sortable, references } = field
+
+  console.log("references", references)
 
   // Handle type as string or array
   const typeStr = Array.isArray(type) ? type[0] : type
 
-  let fieldType = ""
+  let fieldType: string
+
   switch (typeStr) {
     case "string":
       fieldType = "i.string()"
@@ -22,6 +25,15 @@ function convertFieldType(field: DBFieldAttribute): string {
       break
     case "number":
       fieldType = "i.number()"
+      break
+    case "json":
+      fieldType = "i.json()"
+      break
+    case "number[]":
+      fieldType = "i.json()"
+      break
+    case "string[]":
+      fieldType = "i.json()"
       break
     default:
       fieldType = "i.string()" // Default to string for unknown types
@@ -58,6 +70,7 @@ export function createSchema(
   for (const [key, table] of Object.entries(tables)) {
     const { modelName, fields } = table
 
+    console.log("modelName", modelName)
     // Special handling for user table
     if (modelName === "user") {
       const userFields: string[] = []
@@ -101,8 +114,8 @@ export function createSchema(
       }
 
       // Pluralize table name if usePlural is true
-      const entityName = usePlural ? `${key}s` : key
-      entities[entityName] =
+      const namespace = usePlural ? `${key}s` : key
+      entities[namespace] =
         `i.entity({\n      ${entityFields.join(",\n      ")}\n    })`
     }
   }
