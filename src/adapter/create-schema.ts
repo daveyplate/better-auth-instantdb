@@ -1,12 +1,12 @@
 import type { BetterAuthDBSchema, DBFieldAttribute } from "@better-auth/core/db"
 
+import { fieldNameToLabel } from "../lib/utils"
+
 /**
  * Converts a Better Auth field type to InstantDB field type
  */
-function convertFieldType(field: DBFieldAttribute) {
-  const { type, required, unique, sortable, references } = field
-
-  console.log("references", references)
+function convertFieldType(field: DBFieldAttribute, modelName: string) {
+  const { type, required, unique, sortable } = field
 
   // Handle type as string or array
   const typeStr = Array.isArray(type) ? type[0] : type
@@ -55,6 +55,11 @@ function convertFieldType(field: DBFieldAttribute) {
     fieldType += ".indexed()"
   }
 
+  // For user model, ensure all fields end with optional()
+  if (modelName === "user" && !fieldType.endsWith(".optional()")) {
+    fieldType += ".optional()"
+  }
+
   return fieldType
 }
 
@@ -70,18 +75,6 @@ function getEntityName(
     return "$users"
   }
   return usePlural ? `${tableKey}s` : tableKey
-}
-
-/**
- * Converts a field name to a relationship label
- * e.g., "userId" -> "user", "organizationId" -> "organization"
- */
-function fieldNameToLabel(fieldName: string): string {
-  // Remove "Id" suffix if present
-  if (fieldName.toLowerCase().endsWith("id")) {
-    return fieldName.slice(0, -2)
-  }
-  return fieldName
 }
 
 /**
@@ -134,8 +127,8 @@ export function createLinks(
           toCamelCase(targetModel.slice(1))
         const linkName = `${sourceTableName}${targetTableName}`
 
-        // Generate forward label from field name
-        const forwardLabel = fieldNameToLabel(fieldKey)
+        // Generate forward label from field name, using target model if field doesn't end with "id"
+        const forwardLabel = fieldNameToLabel(fieldKey, targetModel)
 
         // Generate reverse label (use source entity name without $ prefix)
         const reverseLabel = sourceEntityName.replace("$", "")
@@ -173,54 +166,19 @@ export function createSchema(
   for (const [key, table] of Object.entries(tables)) {
     const { modelName, fields } = table
 
-    console.log("modelName", modelName)
-    // Special handling for user table
-    if (modelName === "user") {
-      const userFields: string[] = []
-      const processedFields = new Set<string>()
+    // For other tables, use the key as entity name
+    const entityFields: string[] = []
 
-      // Always add email, imageURL, and type at the top (exact format required)
-      userFields.push("email: i.string().unique().indexed().optional()")
-      processedFields.add("email")
-
-      userFields.push("imageURL: i.string().optional()")
-      processedFields.add("imageURL") // Skip imageURL if it exists in fields
-
-      userFields.push("type: i.string().optional()")
-      processedFields.add("type") // Skip type if it exists in fields
-
-      // Add all other fields from the schema (including image as-is, don't transform it)
-      // All Better Auth fields must be optional on $users
-      for (const [fieldKey, field] of Object.entries(fields)) {
-        // Skip fields that are always included at the top: email, imageURL, type
-        if (processedFields.has(fieldKey)) {
-          continue
-        }
-
-        // Add field as-is but force it to be optional
-        const fieldType = convertFieldType(field)
-        // Ensure it ends with .optional() - remove existing .optional() if present and add it
-        const optionalFieldType = fieldType.endsWith(".optional()")
-          ? fieldType
-          : `${fieldType}.optional()`
-        userFields.push(`${fieldKey}: ${optionalFieldType}`)
-      }
-
-      entities.$users = `i.entity({\n      ${userFields.join(",\n      ")}\n    })`
-    } else {
-      // For other tables, use the key as entity name
-      const entityFields: string[] = []
-
-      for (const [fieldKey, field] of Object.entries(fields)) {
-        const fieldType = convertFieldType(field)
-        entityFields.push(`${fieldKey}: ${fieldType}`)
-      }
-
-      // Pluralize table name if usePlural is true
-      const namespace = usePlural ? `${key}s` : key
-      entities[namespace] =
-        `i.entity({\n      ${entityFields.join(",\n      ")}\n    })`
+    for (const [fieldKey, field] of Object.entries(fields)) {
+      const fieldType = convertFieldType(field, modelName)
+      entityFields.push(`${fieldKey}: ${fieldType}`)
     }
+
+    // Pluralize table name if usePlural is true
+    const namespace =
+      modelName === "user" ? "$users" : usePlural ? `${key}s` : key
+    entities[namespace] =
+      `i.entity({\n      ${entityFields.join(",\n      ")}\n    })`
   }
 
   // Generate links from references

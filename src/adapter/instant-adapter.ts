@@ -1,3 +1,4 @@
+import type { BetterAuthDBSchema } from "@better-auth/core/db"
 import {
   type InstantAdminDatabase,
   type InstaQLParams,
@@ -9,11 +10,93 @@ import {
   type Where
 } from "better-auth/adapters"
 
-import { prettyPrint } from "../lib/utils"
+import { fieldNameToLabel, prettyObject } from "../lib/utils"
 import { createSchema } from "./create-schema"
 
 type Direction = "asc" | "desc"
 type Order = { [key: string]: Direction }
+
+/**
+ * Gets the InstantDB entity name for a given model name
+ */
+function getEntityName(
+  modelName: string,
+  tableKey: string,
+  usePlural: boolean
+): string {
+  if (modelName === "user") {
+    return "$users"
+  }
+  return usePlural ? `${tableKey}s` : tableKey
+}
+
+/**
+ * Builds entity name mapping from schema
+ */
+function buildEntityNameMap(
+  schema: BetterAuthDBSchema,
+  usePlural: boolean
+): Record<string, string> {
+  const entityNameMap: Record<string, string> = {}
+  for (const [key, table] of Object.entries(schema)) {
+    const { modelName } = table
+    entityNameMap[modelName] = getEntityName(modelName, key, usePlural)
+  }
+  return entityNameMap
+}
+
+/**
+ * Creates link transactions for fields with references
+ */
+function createLinkTransactions({
+  db,
+  model,
+  modelSchema,
+  data,
+  entityNameMap
+}: {
+  db: InstantAdminDatabase<any, any>
+  model: string
+  modelSchema: BetterAuthDBSchema[string]
+  data: Record<string, unknown>
+  entityNameMap: Record<string, string>
+}): any[] {
+  const linkTransactions: any[] = []
+  const { fields, modelName } = modelSchema
+
+  for (const [fieldKey, field] of Object.entries(fields)) {
+    const { references } = field
+
+    if (references) {
+      const { model: targetModel } = references
+      const targetEntityName = entityNameMap[targetModel]
+
+      if (!targetEntityName) {
+        console.warn(
+          `Warning: Could not find entity name for model "${targetModel}" referenced by ${modelName}.${fieldKey}`
+        )
+        continue
+      }
+
+      // Check if data has a value for this reference field
+      const fieldValue = data[fieldKey]
+      if (fieldValue != null) {
+        // Generate forward label from field name, using target model if field doesn't end with "id"
+        const forwardLabel = fieldNameToLabel(fieldKey, targetModel)
+
+        // Create link transaction
+        const linkParams: Record<string, string | string[]> = {
+          [forwardLabel]: fieldValue as string | string[]
+        }
+        const linkTransaction = db.tx[model][data.id as string].link(linkParams)
+
+        linkTransactions.push(linkTransaction)
+      }
+    }
+  }
+
+  return linkTransactions
+}
 
 /**
  * The InstantDB adapter config options.
@@ -53,11 +136,14 @@ export const instantAdapter = ({
       supportsBooleans: true, // Whether the database supports booleans. (Default: true)
       supportsNumericIds: false // Whether the database supports auto-incrementing numeric IDs. (Default: true)
     },
-    adapter: ({ debugLog, getDefaultModelName, getFieldName }) => {
+    adapter: ({ debugLog, getDefaultModelName, getFieldName, schema }) => {
       return {
         create: async ({ data, model }) => {
+          const defaultModelName = getDefaultModelName(model)
+          const modelSchema = schema[defaultModelName]
+
           // Create the InstantDB token and override session.token
-          if (getDefaultModelName(model) === "session") {
+          if (defaultModelName === "session") {
             // Get the $users entity for this session's userId
             const result = await db.query({
               $users: { $: { where: { id: data.userId } } }
@@ -81,13 +167,30 @@ export const instantAdapter = ({
             Object.assign(data, { [tokenField]: token })
           }
 
-          if (getDefaultModelName(model) === "user") {
+          if (defaultModelName === "user") {
             model = "$users"
           }
 
-          debugLog("Create", model, prettyPrint(data))
+          debugLog("Create", model, prettyObject(data))
 
-          await db.transact([db.tx[model][data.id].create(data)])
+          // Build entity name map for link resolution
+          const entityNameMap = buildEntityNameMap(schema, usePlural)
+
+          // Create the main entity transaction
+          const createTransaction = db.tx[model][data.id].create(data)
+
+          // Create link transactions for fields with references
+          const linkTransactions = createLinkTransactions({
+            db,
+            model,
+            modelSchema,
+            data,
+            entityNameMap
+          })
+
+          // Combine all transactions and execute in a single transaction
+          const allTransactions = [createTransaction, ...linkTransactions]
+          await db.transact(allTransactions)
 
           return data
         },
@@ -103,7 +206,7 @@ export const instantAdapter = ({
           debugLog(
             "Update:",
             entities.map((entity) => entity.id),
-            prettyPrint(update)
+            prettyObject(update)
           )
 
           const transactions = entities.map((entity) =>
@@ -126,7 +229,7 @@ export const instantAdapter = ({
           debugLog(
             "Update:",
             entities.map((entity) => entity.id),
-            prettyPrint(update)
+            prettyObject(update)
           )
 
           const transactions = entities.map((entity) =>
@@ -269,11 +372,11 @@ async function fetchEntities({
     [model]: { $: { where: parseWhere(where), limit, offset, order } }
   } as InstaQLParams<any>
 
-  debugLog("Query", prettyPrint(query))
+  debugLog("Query", prettyObject(query))
 
   const result = await db.query(query)
 
-  debugLog("Result", prettyPrint(result))
+  debugLog("Result", prettyObject(result))
 
   return result[model] as any[]
 }
