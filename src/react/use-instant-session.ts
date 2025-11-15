@@ -1,23 +1,24 @@
-/** biome-ignore-all lint/suspicious/noExplicitAny: ignore */
+/** biome-ignore-all lint/suspicious/noExplicitAny: any thing goes */
+/** biome-ignore-all lint/correctness/useHookAtTopLevel: ignore */
 
-import type { Config } from "@instantdb/admin"
 import type { User } from "@instantdb/core"
-import type { InstantReactWebDatabase } from "@instantdb/react"
 import type { BetterFetchError } from "better-auth/react"
-import type { MinimalAuthClient, SessionResult } from "./types"
+import type { SessionResult } from "./types"
+import type { InstantAuthProps } from "./use-instant-auth"
 import { usePersistentSession } from "./use-persistent-session"
 
-export function useInstantSession<
-  TSessionResult extends SessionResult,
-  TAuthClient extends MinimalAuthClient<TSessionResult>
->(db: InstantReactWebDatabase<any, Config>, authClient: TAuthClient) {
+export function useInstantSession<TSessionResult extends SessionResult>({
+  db,
+  authClient,
+  persistent
+}: InstantAuthProps<TSessionResult>) {
   const {
     data: sessionData,
     isPending,
     error,
     isRefetching,
     ...rest
-  } = usePersistentSession(authClient)
+  } = persistent ? usePersistentSession(authClient) : authClient.useSession()
 
   const { user: authUser, error: authError } = db.useAuth()
   const authPending = sessionData && !authUser && !authError
