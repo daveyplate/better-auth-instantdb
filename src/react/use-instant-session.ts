@@ -41,7 +41,7 @@ export function useInstantSession<
     data: !authError ? sessionData : null,
     isPending: authPending || isPending,
     isRefetching: authPending || isRefetching,
-    error: ((authError || error) as BetterFetchError) || null,
+    error: (authError as BetterFetchError) || error,
     ...rest
   }
 }
