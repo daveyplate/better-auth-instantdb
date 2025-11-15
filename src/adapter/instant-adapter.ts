@@ -1,9 +1,14 @@
-import { type InstantAdminDatabase, id } from "@instantdb/admin"
+import {
+  type InstantAdminDatabase,
+  type InstaQLParams,
+  id
+} from "@instantdb/admin"
 import {
   createAdapterFactory,
   type DBAdapterDebugLogOption,
   type Where
 } from "better-auth/adapters"
+
 import { prettyPrint } from "../lib/utils"
 import { createSchema } from "./create-schema"
 
@@ -53,7 +58,7 @@ export const instantAdapter = ({
         create: async ({ data, model }) => {
           // Create the InstantDB token and override session.token
           if (getDefaultModelName(model) === "session") {
-            // Get the $users entity for this session's userId with the user link
+            // Get the $users entity for this session's userId
             const result = await db.query({
               $users: { $: { where: { id: data.userId } } }
             })
@@ -73,8 +78,7 @@ export const instantAdapter = ({
             const token = await db.auth.createToken($user.email as string)
             const tokenField = getFieldName({ model, field: "token" })
 
-            // @ts-expect-error
-            data[tokenField] = token
+            Object.assign(data, { [tokenField]: token })
           }
 
           if (getDefaultModelName(model) === "user") {
@@ -92,15 +96,7 @@ export const instantAdapter = ({
             model = "$users"
           }
 
-          const query = { [model]: { $: { where: parseWhere(where) } } }
-
-          debugLog("Query", prettyPrint(query))
-
-          const result = await db.query(query as never)
-
-          debugLog("Result", prettyPrint(result))
-
-          const entities = result[model] as any[]
+          const entities = await fetchEntities({ db, model, where, debugLog })
 
           if (!entities.length) return null
 
@@ -123,15 +119,9 @@ export const instantAdapter = ({
             model = "$users"
           }
 
-          const query = { [model]: { $: { where: parseWhere(where) } } }
+          const entities = await fetchEntities({ db, model, where, debugLog })
 
-          debugLog("Query", prettyPrint(query))
-
-          const result = await db.query(query as never)
-
-          debugLog("Result", prettyPrint(result))
-
-          const entities = result[model] as any[]
+          if (!entities.length) return 0
 
           debugLog(
             "Update:",
@@ -152,15 +142,9 @@ export const instantAdapter = ({
             model = "$users"
           }
 
-          const query = { [model]: { $: { where: parseWhere(where) } } }
+          const entities = await fetchEntities({ db, model, where, debugLog })
 
-          debugLog("Query", prettyPrint(query))
-
-          const result = await db.query(query as never)
-
-          debugLog("Result", prettyPrint(result))
-
-          const entities = result[model] as any[]
+          if (!entities.length) return
 
           const transactions = entities.map((entity) =>
             db.tx[model][entity.id].delete()
@@ -186,15 +170,9 @@ export const instantAdapter = ({
             model = "$users"
           }
 
-          const query = { [model]: { $: { where: parseWhere(where) } } }
+          const entities = await fetchEntities({ db, model, where, debugLog })
 
-          debugLog("Query", prettyPrint(query))
-
-          const result = await db.query(query as never)
-
-          debugLog("Result", prettyPrint(result))
-
-          const entities = result[model] as any[]
+          if (!entities.length) return 0
 
           const transactions = entities.map((entity) =>
             db.tx[model][entity.id].delete()
@@ -222,15 +200,7 @@ export const instantAdapter = ({
             model = "$users"
           }
 
-          const query = { [model]: { $: { where: parseWhere(where) } } }
-
-          debugLog("Query", prettyPrint(query))
-
-          const result = await db.query(query as never)
-
-          debugLog("Result", prettyPrint(result))
-
-          const entities = result[model] as any[]
+          const entities = await fetchEntities({ db, model, where, debugLog })
 
           if (entities.length) return entities[0]
 
@@ -241,41 +211,25 @@ export const instantAdapter = ({
             model = "$users"
           }
 
-          let order: Order | undefined
-          if (sortBy) {
-            order = {
-              [sortBy.field]: sortBy.direction
-            }
-          }
+          const entities = await fetchEntities({
+            db,
+            model,
+            where,
+            limit,
+            sortBy,
+            offset,
+            debugLog
+          })
 
-          const query = {
-            [model]: { $: { where: parseWhere(where), limit, offset, order } }
-          }
-
-          debugLog("Query", prettyPrint(query))
-
-          const result = await db.query(query as never)
-
-          debugLog("Result", prettyPrint(result))
-
-          const entities = result[model]
-
-          return entities as any[]
+          return entities
         },
         count: async ({ model, where }) => {
           if (getDefaultModelName(model) === "user") {
             model = "$users"
           }
 
-          const query = { [model]: { $: { where: parseWhere(where) } } }
+          const entities = await fetchEntities({ db, model, where, debugLog })
 
-          debugLog("Query", prettyPrint(query))
-
-          const result = await db.query(query as never)
-
-          debugLog("Result", prettyPrint(result))
-
-          const entities = result[model] as any[]
           return entities.length
         },
         createSchema: async ({ file, tables }) => {
@@ -284,6 +238,43 @@ export const instantAdapter = ({
       }
     }
   })
+}
+
+async function fetchEntities({
+  db,
+  debugLog,
+  model,
+  where,
+  limit,
+  offset,
+  sortBy
+}: {
+  db: InstantAdminDatabase<any, any>
+  debugLog: (...args: any[]) => void
+  model: string
+  where?: Where[]
+  limit?: number
+  offset?: number
+  sortBy?: { field: string; direction: "asc" | "desc" }
+}) {
+  let order: Order | undefined
+  if (sortBy) {
+    order = {
+      [sortBy.field]: sortBy.direction
+    }
+  }
+
+  const query = {
+    [model]: { $: { where: parseWhere(where), limit, offset, order } }
+  } as InstaQLParams<any>
+
+  debugLog("Query", prettyPrint(query))
+
+  const result = await db.query(query)
+
+  debugLog("Result", prettyPrint(result))
+
+  return result[model] as any[]
 }
 
 export function parseWhere(where?: Where[]) {
