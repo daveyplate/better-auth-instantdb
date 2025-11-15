@@ -1,31 +1,9 @@
-import type { DBAdapterSchemaCreation } from "better-auth/adapters"
-
-// Helper type to extract field information from Better Auth schema
-type BetterAuthField = {
-  type: string | string[]
-  required?: boolean
-  unique?: boolean
-  defaultValue?: unknown
-  input?: boolean
-  sortable?: boolean
-  fieldName?: string
-  references?: {
-    model: string
-    field: string
-    onDelete?: string
-  }
-}
-
-type BetterAuthTable = {
-  modelName: string
-  fields: Record<string, BetterAuthField>
-  order?: number
-}
+import type { BetterAuthDBSchema, DBFieldAttribute } from "@better-auth/core/db"
 
 /**
  * Converts a Better Auth field type to InstantDB field type
  */
-function convertFieldType(field: BetterAuthField): string {
+function convertFieldType(field: DBFieldAttribute): string {
   const { type, required, unique, sortable } = field
 
   // Handle type as string or array
@@ -69,10 +47,10 @@ function convertFieldType(field: BetterAuthField): string {
 }
 
 /**
- * Converts Better Auth schema format to InstantDB schema format
+ * Creates an InstantDB schema file from Better Auth schema format
  */
-function convertToInstantDBSchema(
-  tables: Record<string, BetterAuthTable>,
+export function createSchema(
+  tables: BetterAuthDBSchema,
   usePlural: boolean
 ): string {
   const entities: Record<string, string> = {}
@@ -144,22 +122,4 @@ ${entitiesString}
   }
 })
 `
-}
-
-/**
- * Creates an InstantDB schema file from Better Auth schema format
- */
-export function createSchema(
-  file: string,
-  tables: Record<string, BetterAuthTable>,
-  usePlural: boolean
-): DBAdapterSchemaCreation {
-  const schemaContent = convertToInstantDBSchema(tables, usePlural)
-  // const filePath = resolve(process.cwd(), file)
-  // writeFileSync(file, schemaContent, "utf-8")
-  //console.log(`Schema file created at: ${filePath}`)
-  return {
-    code: schemaContent,
-    path: file
-  }
 }

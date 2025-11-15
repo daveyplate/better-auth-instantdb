@@ -232,8 +232,9 @@ export const instantAdapter = ({
 
           return entities.length
         },
-        createSchema: async ({ file, tables }) => {
-          return createSchema(file ?? "./auth.schema.ts", tables, usePlural)
+        createSchema: async ({ file = "./auth.schema.ts", tables }) => {
+          const code = createSchema(tables, usePlural)
+          return { code, path: file }
         }
       }
     }

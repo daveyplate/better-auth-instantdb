@@ -34,6 +34,7 @@
   "author": "daveycodez",
   "license": "MIT",
   "devDependencies": {
+    "@better-auth/core": "^1.3.34",
     "@instantdb/admin": "^0.22.51",
     "@instantdb/core": "^0.22.51",
     "@instantdb/react": "^0.22.51",
